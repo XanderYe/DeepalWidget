@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="cn.xanderye.android.deepalwidget">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+
+    <queries>
+        <package android:name="deepal.com.cn.app" />
+    </queries>
+
+    <application
+            android:allowBackup="true"
+            android:icon="@drawable/icon"
+            android:label="@string/app_name"
+            android:roundIcon="@drawable/icon"
+            android:supportsRtl="true"
+            android:theme="@style/Theme.DeepalWidget">
+        <activity android:name=".MainActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <receiver android:name=".provider.CarWidgetProvider" android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"></action>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                       android:resource="@xml/car_widget_config"></meta-data>
+        </receiver>
+        <service android:name=".service.CarDataTimeService"
+                 android:enabled="true"
+                 android:exported="true"
+                 android:priority="1000"></service>
+    </application>
+
+</manifest>

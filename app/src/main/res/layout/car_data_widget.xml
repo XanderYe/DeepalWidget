@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:custom="http://schemas.android.com/apk/res-auto"
+              android:layout_width="match_parent"
+              android:layout_height="150dp"
+              android:paddingLeft="8dp"
+              android:paddingRight="8dp"
+              android:background="@drawable/widget_background"
+              android:orientation="vertical">
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="24dp"
+                  android:orientation="horizontal">
+        <TextView android:id="@+id/carNameText"
+                  android:text="我的爱车"
+                  android:textSize="14dp"
+                  android:textFontWeight="1000"
+                  android:gravity="bottom|center"
+                  android:layout_marginLeft="16dp"
+                  android:layout_width="wrap_content"
+                  android:layout_height="match_parent">
+        </TextView>
+        <TextView android:id="@+id/plateNumberText"
+                  android:text="浙BD88888"
+                  android:textSize="11dp"
+                  android:gravity="bottom|center"
+                  android:layout_marginLeft="16dp"
+                  android:layout_width="wrap_content"
+                  android:layout_height="match_parent">
+        </TextView>
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="80dp"
+                  android:orientation="horizontal">
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="match_parent"
+                      android:orientation="vertical"
+                      android:gravity="center"
+                      android:layout_weight="1">
+            <ImageView
+                    android:id="@+id/carImg"
+                    android:layout_width="150dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center_horizontal"
+                    android:background="@drawable/car_img"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="match_parent"
+                      android:layout_marginLeft="8dp"
+                      android:layout_marginRight="8dp"
+                      android:orientation="vertical"
+                      android:layout_weight="1">
+            <LinearLayout android:id="@+id/power_layout"
+                          android:layout_width="match_parent"
+                          android:layout_height="36dp"
+                          android:orientation="horizontal">
+                <ImageView android:id="@+id/charge_icon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="center_vertical"
+                        android:background="@drawable/power_icon" />
+                <LinearLayout android:layout_width="match_parent"
+                              android:layout_height="36dp"
+                              android:layout_marginLeft="8dp"
+                              android:orientation="vertical">
+                    <LinearLayout android:layout_width="match_parent"
+                                  android:layout_height="wrap_content"
+                                  android:layout_marginTop="4dp"
+                                  android:orientation="horizontal">
+                        <TextView android:id="@+id/remainedPowerText"
+                                  android:text=""
+                                  android:layout_width="48dp"
+                                  android:layout_height="wrap_content"/>
+                        <TextView android:id="@+id/remainedPowerMileText"
+                                  android:text=""
+                                  android:layout_width="match_parent"
+                                  android:layout_height="match_parent"/>
+                    </LinearLayout>
+                    <ProgressBar android:id="@+id/powerProgress"
+                                 android:layout_width="match_parent"
+                                 android:layout_height="3dp"
+                                 style="?android:attr/progressBarStyleHorizontal"
+                                 android:max="100"
+                                 android:progress="100"
+                                 android:progressDrawable="@drawable/progress_bg">
+                    </ProgressBar>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/oil_layout"
+                          android:layout_width="match_parent"
+                          android:layout_height="36dp"
+                          android:visibility="gone"
+                          android:orientation="horizontal">
+                <LinearLayout android:layout_width="match_parent"
+                              android:layout_height="36dp"
+                              android:layout_weight="1"
+                              android:layout_marginRight="4dp"
+                              android:orientation="vertical">
+                    <LinearLayout android:layout_width="wrap_content"
+                                  android:layout_height="wrap_content"
+                                  android:orientation="horizontal">
+                        <ImageView android:id="@+id/oil_charge_icon"
+                                   android:layout_width="24dp"
+                                   android:layout_height="24dp"
+                                   android:layout_gravity="center_vertical"
+                                   android:background="@drawable/power_icon" />
+                        <TextView android:id="@+id/oil_remainedPowerMileText"
+                                  android:text=""
+                                  android:textSize="11dp"
+                                  android:layout_marginLeft="4dp"
+                                  android:gravity="center_vertical"
+                                  android:layout_width="match_parent"
+                                  android:layout_height="match_parent"/>
+                    </LinearLayout>
+
+                    <ProgressBar android:id="@+id/oil_powerProgress"
+                                 android:layout_width="match_parent"
+                                 android:layout_height="3dp"
+                                 android:layout_marginTop="3dp"
+                                 style="?android:attr/progressBarStyleHorizontal"
+                                 android:max="100"
+                                 android:progress="100"
+                                 android:progressDrawable="@drawable/progress_bg">
+                    </ProgressBar>
+                </LinearLayout>
+                <LinearLayout android:layout_width="match_parent"
+                              android:layout_height="36dp"
+                              android:layout_marginLeft="4dp"
+                              android:layout_weight="1"
+                              android:orientation="vertical">
+
+                    <LinearLayout android:layout_width="wrap_content"
+                                  android:layout_height="wrap_content"
+                                  android:orientation="horizontal">
+                        <ImageView android:id="@+id/oil_icon"
+                                   android:layout_width="24dp"
+                                   android:layout_height="24dp"
+                                   android:layout_gravity="center_vertical"
+                                   android:background="@drawable/oil_icon" />
+                        <TextView android:id="@+id/oil_remainedOilMileText"
+                                  android:text=""
+                                  android:textSize="11dp"
+                                  android:layout_marginLeft="4dp"
+                                  android:gravity="center_vertical"
+                                  android:layout_width="match_parent"
+                                  android:layout_height="match_parent"/>
+                    </LinearLayout>
+                    <ProgressBar android:id="@+id/oil_oilProgress"
+                                 android:layout_width="match_parent"
+                                 android:layout_height="3dp"
+                                 android:layout_marginTop="3dp"
+                                 style="?android:attr/progressBarStyleHorizontal"
+                                 android:max="100"
+                                 android:progress="100"
+                                 android:progressDrawable="@drawable/progress_bg">
+                    </ProgressBar>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/total_layout"
+                          android:layout_width="match_parent"
+                          android:layout_height="36dp"
+                          android:orientation="horizontal">
+                <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_gravity="center_vertical"
+                        android:background="@drawable/mileage_icon" />
+                <LinearLayout android:layout_width="match_parent"
+                              android:layout_height="36dp"
+                              android:layout_marginLeft="8dp"
+                              android:orientation="vertical">
+                    <LinearLayout android:layout_width="match_parent"
+                                  android:layout_height="18dp"
+                                  android:layout_marginTop="4dp"
+                                  android:orientation="horizontal">
+                        <TextView android:text="总里程"
+                                  android:textSize="11dp"
+                                  android:layout_width="48dp"
+                                  android:gravity="bottom"
+                                  android:layout_height="match_parent"/>
+                        <TextView android:id="@+id/totalOdometerText"
+                                  android:text=""
+                                  android:textSize="11dp"
+                                  android:gravity="bottom"
+                                  android:layout_width="wrap_content"
+                                  android:layout_height="match_parent"/>
+                    </LinearLayout>
+                    <ProgressBar android:layout_width="match_parent"
+                                 android:layout_height="3dp"
+                                 style="?android:attr/progressBarStyleHorizontal"
+                                 android:max="100"
+                                 android:progress="100"
+                                 android:progressDrawable="@drawable/progress_orange">
+                    </ProgressBar>
+                </LinearLayout>
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent"
+                          android:layout_height="match_parent"
+                          android:gravity="center_horizontal">
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="48dp"
+                  android:paddingBottom="4dp"
+                  android:orientation="horizontal">
+        <LinearLayout android:layout_width="match_parent"
+                      android:layout_height="match_parent"
+                      android:layout_weight="1"
+                      android:orientation="vertical">
+            <LinearLayout android:layout_width="match_parent"
+                          android:layout_height="24dp"
+                          android:orientation="horizontal"
+                          android:gravity="center_horizontal">
+                <LinearLayout android:layout_width="wrap_content"
+                              android:layout_height="match_parent"
+                              android:orientation="horizontal"
+                              android:gravity="center|right">
+                    <ImageView
+                            android:id="@+id/lockImg"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center|right"
+                            android:background="@drawable/lock_icon" />
+                    <ImageView
+                            android:id="@+id/unlockImg"
+                            android:visibility="gone"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center|right"
+                            android:background="@drawable/unlock_icon" />
+                    <TextView android:id="@+id/lockStatusText"
+                              android:text="已闭锁"
+                              android:textSize="13dp"
+                              android:textColor="@color/lock_color"
+                              android:textFontWeight="1000"
+                              android:gravity="center|left"
+                              android:layout_width="wrap_content"
+                              android:layout_height="match_parent"
+                              android:layout_weight="1"/>
+                </LinearLayout>
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent"
+                          android:layout_height="match_parent"
+                          android:gravity="center_horizontal">
+                <LinearLayout android:layout_width="wrap_content"
+                              android:layout_height="match_parent">
+                    <ImageView android:id="@+id/iv_refresh"
+                               android:layout_width="24dp"
+                               android:layout_height="24dp"
+                               android:padding="4dp"
+                               android:layout_gravity="center_vertical"
+                               android:background="@drawable/refresh_icon" />
+                    <TextView android:id="@+id/terminalTimeText"
+                              android:text="1970-01-01 00:00:00"
+                              android:textSize="11dp"
+                              android:layout_marginLeft="4dp"
+                              android:gravity="center_vertical"
+                              android:layout_width="wrap_content"
+                              android:layout_height="match_parent">
+                    </TextView>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/location_layout"
+                      android:layout_width="match_parent"
+                      android:layout_height="match_parent"
+                      android:layout_weight="1">
+            <ImageView android:layout_width="24dp"
+                       android:layout_height="24dp"
+                       android:padding="4dp"
+                       android:layout_marginLeft="8dp"
+                       android:layout_gravity="center_vertical"
+                       android:background="@drawable/location_icon" />
+            <TextView android:id="@+id/locationText"
+                      android:text=""
+                      android:textSize="11dp"
+                      android:layout_marginLeft="4dp"
+                      android:gravity="center_vertical"
+                      android:layout_width="wrap_content"
+                      android:layout_height="match_parent">
+            </TextView>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
