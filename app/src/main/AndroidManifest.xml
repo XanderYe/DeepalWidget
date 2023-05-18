@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <queries>
         <package android:name="deepal.com.cn.app" />
@@ -28,17 +29,19 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <receiver android:name=".provider.CarWidgetProvider" android:exported="false">
+        <activity android:name=".activity.BatteryActivity"
+                  android:label="电池管理"
+                  android:exported="false">
+        </activity>
+        <receiver android:name=".provider.CarWidgetProvider"
+                  android:label="@string/car_data_widget_name"
+                  android:exported="false">
             <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"></action>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
             </intent-filter>
             <meta-data android:name="android.appwidget.provider"
-                       android:resource="@xml/car_widget_config"></meta-data>
+                       android:resource="@xml/car_data_widget_config"/>
         </receiver>
-        <service android:name=".service.CarDataTimeService"
-                 android:enabled="true"
-                 android:exported="true"
-                 android:priority="1000"></service>
     </application>
 
 </manifest>

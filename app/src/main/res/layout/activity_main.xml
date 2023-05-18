@@ -7,18 +7,29 @@
         tools:context=".MainActivity"
         android:orientation="vertical">
     <LinearLayout android:layout_width="match_parent"
-                  android:layout_height="72dp"
+                  android:layout_height="96dp"
                   android:layout_marginTop="16dp"
                   android:orientation="horizontal">
-        <TextView android:text="TOKEN："
-                  android:layout_width="100dp"
-                  android:layout_height="match_parent"
-                  android:gravity="right">
-        </TextView>
+        <LinearLayout android:layout_width="100dp"
+                      android:layout_height="match_parent"
+                      android:orientation="vertical">
+            <TextView android:text="登录TOKEN："
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:gravity="right">
+            </TextView>
+            <ImageView android:id="@+id/copyTokenImg"
+                       android:layout_width="20dp"
+                       android:layout_height="20dp"
+                       android:layout_marginTop="4dp"
+                       android:layout_marginEnd="20dp"
+                       android:layout_gravity="right"
+                       android:background="@drawable/copy" />
+        </LinearLayout>
         <EditText android:id="@+id/tokenEditText"
                   android:layout_width="match_parent"
                   android:layout_height="match_parent"
-                  android:hint="请输入refresh token">
+                  android:hint="请输入JWT的token，ey开头">
         </EditText>
     </LinearLayout>
     <LinearLayout android:layout_width="match_parent"
@@ -70,17 +81,17 @@
                   android:layout_height="48dp"
                   android:layout_marginTop="16dp"
                   android:orientation="horizontal">
-        <TextView android:text="上次更新时间："
+        <TextView android:text="车机流量："
                   android:layout_width="100dp"
                   android:gravity="right"
                   android:layout_height="match_parent">
         </TextView>
-        <TextView android:id="@+id/lastUpdateText"
+        <TextView android:id="@+id/cellularText"
                   android:text=""
                   android:layout_width="150dp"
                   android:layout_height="match_parent">
         </TextView>
-        <ImageView android:id="@+id/refreshTime"
+        <ImageView android:id="@+id/cellularRefreshImg"
                    android:layout_width="24dp"
                    android:layout_height="24dp"
                    android:padding="4dp"
@@ -91,6 +102,13 @@
                   android:orientation="horizontal">
         <Button android:text="保存"
                 android:id="@+id/saveBtn"
+                android:layout_width="120dp"
+                android:layout_marginLeft="2dp"
+                android:layout_height="match_parent">
+        </Button>
+        <Button android:text="激活小组件"
+                android:id="@+id/activeBtn"
+                android:layout_marginLeft="8dp"
                 android:layout_width="124dp"
                 android:layout_height="match_parent">
         </Button>
@@ -101,18 +119,21 @@
                 android:visibility="gone"
                 android:layout_height="match_parent">
         </Button>
-        <Button android:text="启动定时服务"
-                android:id="@+id/startServiceBtn"
-                android:layout_width="124dp"
-                android:layout_marginLeft="8dp"
-                android:visibility="gone"
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent"
+                  android:layout_height="48dp"
+                  android:orientation="horizontal">
+        <Button android:text="电池管理"
+                android:id="@+id/batteryBtn"
+                android:layout_width="120dp"
+                android:layout_marginLeft="2dp"
                 android:layout_height="match_parent">
         </Button>
-        <Button android:text="结束定时服务"
-                android:id="@+id/stopServiceBtn"
-                android:layout_width="124dp"
-                android:layout_marginLeft="8dp"
+        <Button android:text="车辆控制"
+                android:id="@+id/controlBtn"
                 android:visibility="gone"
+                android:layout_width="120dp"
+                android:layout_marginLeft="8dp"
                 android:layout_height="match_parent">
         </Button>
     </LinearLayout>

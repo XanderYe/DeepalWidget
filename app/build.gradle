@@ -10,8 +10,8 @@ android {
         applicationId "cn.xanderye.android.deepalwidget"
         minSdkVersion 28
         targetSdkVersion 32
-        versionCode 16
-        versionName "1.6"
+        versionCode 200
+        versionName "2.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -31,7 +31,7 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

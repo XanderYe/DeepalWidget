@@ -1,6 +1,5 @@
 package cn.xanderye.android.deepalwidget.provider;
 
-import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -9,8 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
@@ -20,10 +19,8 @@ import androidx.core.content.ContextCompat;
 import cn.xanderye.android.deepalwidget.R;
 import cn.xanderye.android.deepalwidget.constant.Constants;
 import cn.xanderye.android.deepalwidget.entity.CarData;
-import cn.xanderye.android.deepalwidget.service.CarDataTimeService;
 import cn.xanderye.android.deepalwidget.service.DeepalService;
 import cn.xanderye.android.deepalwidget.util.AndroidUtil;
-import cn.xanderye.android.deepalwidget.util.DeepalUtil;
 import com.alibaba.fastjson.JSONObject;
 
 import java.util.concurrent.ExecutorService;
@@ -66,61 +63,40 @@ public class CarWidgetProvider extends AppWidgetProvider {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         Log.d(TAG, "widget onReceive, action: " + action);
-        if (action.equals(OPEN_DEEPAL_WIDGET)) {
-            PackageManager packageManager = context.getPackageManager();
-            Intent appIntent = packageManager.getLaunchIntentForPackage(Constants.DEEPAL_PACKAGE_NAME);
-            if(appIntent != null){
-                try {
-                    context.startActivity(appIntent);
-                } catch (Exception e) {
-                    Log.d(TAG, "深蓝打开失败，原因：" + e.getMessage());
-                    Toast.makeText(context, "打开失败", Toast.LENGTH_SHORT).show();
+        switch (action) {
+            case OPEN_DEEPAL_WIDGET:
+                PackageManager packageManager = context.getPackageManager();
+                Intent appIntent = packageManager.getLaunchIntentForPackage(Constants.DEEPAL_PACKAGE_NAME);
+                if (appIntent != null) {
+                    try {
+                        context.startActivity(appIntent);
+                    } catch (Exception e) {
+                        Log.d(TAG, "深蓝打开失败，原因：" + e.getMessage());
+                        Toast.makeText(context, "打开失败", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(context, "请先安装深蓝app", Toast.LENGTH_SHORT).show();
                 }
-            }else{
-                Toast.makeText(context, "请先安装深蓝app", Toast.LENGTH_SHORT).show();
-            }
-        } else if (action.equals(REFRESH_WIDGET)) {
-            ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
-            singleThreadExecutor.execute(() -> {
-                Looper.prepare();
-                // showLoading(context);
-                Toast.makeText(context, "刷新...", Toast.LENGTH_SHORT).show();
-                RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.car_data_widget);
-                boolean hasCarData = getCarData(context, remoteViews);
-                refreshWidget(context, remoteViews);
-                // hideLoading(context);
-                String msg = "刷新成功";
-                if (!hasCarData) {
-                    msg = "刷新失败，请检查配置";
-                }
-                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
-                Looper.loop();
-            });
-            singleThreadExecutor.shutdown();
-        } else if (AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)) {
-            Log.d(TAG, "触发系统刷新");
-            ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
-            singleThreadExecutor.execute(() -> {
-                Looper.prepare();
-                // showLoading(context);
-                RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.car_data_widget);
-                getCarData(context, remoteViews);
-                refreshWidget(context, remoteViews);
-                // hideLoading(context);
-                Looper.loop();
-            });
-            singleThreadExecutor.shutdown();
-        } else if (OPEN_AMAP_WIDGET.equals(action)) {
-            ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
-            singleThreadExecutor.execute(() -> {
-                Looper.prepare();
-                Toast.makeText(context, "更新定位信息并导航", Toast.LENGTH_SHORT).show();
-                RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.car_data_widget);
-                getCarLocation(context, remoteViews);
-                refreshWidget(context, remoteViews);
-                Looper.loop();
-            });
-            singleThreadExecutor.shutdown();
+                break;
+            case REFRESH_WIDGET:
+                refresh(context, false);
+                break;
+            case AppWidgetManager.ACTION_APPWIDGET_UPDATE:
+                Log.d(TAG, "触发系统刷新");
+                refresh(context, true);
+                break;
+            case OPEN_AMAP_WIDGET:
+                ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
+                singleThreadExecutor.execute(() -> {
+                    Looper.prepare();
+                    Toast.makeText(context, "更新定位信息并导航", Toast.LENGTH_SHORT).show();
+                    RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.car_data_widget);
+                    getCarLocation(context, remoteViews);
+                    refreshWidget(context, remoteViews);
+                    Looper.loop();
+                });
+                singleThreadExecutor.shutdown();
+                break;
         }
         RemoteViews remoteViews = bindButton(context);
         refreshWidget(context, remoteViews);
@@ -139,7 +115,37 @@ public class CarWidgetProvider extends AppWidgetProvider {
         super.onUpdate(context, appWidgetManager, appWidgetIds);
     }
 
-    private RemoteViews bindButton(Context context) {
+    @Override
+    public void onAppWidgetOptionsChanged(Context context, AppWidgetManager appWidgetManager, int appWidgetId, Bundle newOptions) {
+        Log.d(TAG, "onAppWidgetOptionsChanged");
+        refresh(context, true);
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions);
+    }
+
+    private void refresh(Context context, boolean auto) {
+        ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
+        singleThreadExecutor.execute(() -> {
+            Looper.prepare();
+            if (!auto) {
+                Toast.makeText(context, "刷新...", Toast.LENGTH_SHORT).show();
+            }
+            RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.car_data_widget);
+            boolean hasCarData = getCarData(null, context, remoteViews);
+            refreshWidget(context, remoteViews);
+            if (!auto) {
+                String msg = "刷新成功";
+                if (!hasCarData) {
+                    msg = "刷新失败，请检查配置";
+                }
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+            }
+            Looper.loop();
+        });
+        singleThreadExecutor.shutdown();
+
+    }
+
+    public static RemoteViews bindButton(Context context) {
         int flag;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             flag = PendingIntent.FLAG_IMMUTABLE;
@@ -160,10 +166,12 @@ public class CarWidgetProvider extends AppWidgetProvider {
         return remoteViews;
     }
 
-    public static boolean getCarData(Context context, RemoteViews remoteViews) {
-        DeepalService deepalService = DeepalService.getInstance();
-        deepalService.setContext(context);
-        CarData carData = deepalService.getCarData();
+    public static boolean getCarData(CarData carData, Context context, RemoteViews remoteViews) {
+        if (carData == null) {
+            DeepalService deepalService = DeepalService.getInstance();
+            deepalService.setContext(context);
+            carData = deepalService.getCarData();
+        }
         if (carData != null) {
             Log.d(TAG, "车辆信息：" + carData);
             if (carData.getColor() != null) {
@@ -206,8 +214,8 @@ public class CarWidgetProvider extends AppWidgetProvider {
                 remoteViews.setProgressBar(R.id.powerProgress, 100, powerPercent, false);
             }
 
-            boolean doorLockStatus = carData.getDriverDoorLock() == 0 && carData.getPassengerDoorLock() == 0;
-            if (doorLockStatus) {
+            // 车锁状态
+            if (carData.getLeftFrontDoorLock() == 0) {
                 remoteViews.setTextViewText(R.id.lockStatusText, "已闭锁");
                 remoteViews.setTextColor(R.id.lockStatusText, ContextCompat.getColor(context, R.color.lock_color));
                 remoteViews.setViewVisibility(R.id.lockImg, View.VISIBLE);
@@ -221,7 +229,7 @@ public class CarWidgetProvider extends AppWidgetProvider {
 
             Bitmap bitmap;
             int chargeIconId = isOil ? R.id.oil_charge_icon : R.id.charge_icon;
-            if (carData.getChargeStatus() != null && !Integer.valueOf(3).equals(carData.getChargeStatus())) {
+            if (carData.getBatteryChargeStatus() != null && carData.getBatteryChargeStatus() == 1) {
                 bitmap = AndroidUtil.getImageFromAssetsFile(context, "charge_icon.png");
                 if (bitmap != null) {
                     remoteViews.setImageViewBitmap(chargeIconId, bitmap);

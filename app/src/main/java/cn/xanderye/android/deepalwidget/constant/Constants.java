@@ -14,6 +14,7 @@ public class Constants {
     public static final String TOKEN_KEY = "token";
     public static final String DEVICE_ID_KEY = "deviceId";
     public static final String REFRESH_TOKEN_KEY = "refreshToken";
+    public static final String CAC_TOKEN_KEY = "cacToken";
     public static final String CAR_DATA_KEY = "carData";
     public static final String MAX_OIL_KEY = "maxOil";
     public static final String DEEPAL_PACKAGE_NAME = "deepal.com.cn.app";
@@ -26,4 +27,6 @@ public class Constants {
     public static final int DEFAULT_MILE_MILE = 846;
 
     public static final String ALERT_MESSAGE_KEY = "alertMessage";
+
+    public static final String CHECK_APPLY_KEY = "checkApply";
 }

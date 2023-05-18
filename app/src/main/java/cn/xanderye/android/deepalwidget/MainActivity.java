@@ -1,6 +1,8 @@
 package cn.xanderye.android.deepalwidget;
 
 import android.app.AlertDialog;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -14,12 +16,15 @@ import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+import cn.xanderye.android.deepalwidget.activity.BatteryActivity;
 import cn.xanderye.android.deepalwidget.constant.Constants;
-import cn.xanderye.android.deepalwidget.service.CarDataTimeService;
+import cn.xanderye.android.deepalwidget.entity.CarData;
+import cn.xanderye.android.deepalwidget.provider.CarWidgetProvider;
 import cn.xanderye.android.deepalwidget.service.DeepalService;
 import cn.xanderye.android.deepalwidget.util.AndroidUtil;
 import cn.xanderye.android.deepalwidget.util.DeepalUtil;
 import cn.xanderye.android.deepalwidget.util.DeviceUtil;
+import cn.xanderye.android.deepalwidget.util.Permission;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -35,17 +40,19 @@ public class MainActivity extends AppCompatActivity {
 
     private SharedPreferences config;
 
-    private TextView lastUpdateText;
+    private TextView cellularText;
 
-    private EditText tokenEditText, maxOilText, offsetText;
+    private EditText tokenEditText, refreshTokenEditText, maxOilText, offsetText;
 
     private Spinner colorSpinner;
 
-    private Button saveBtn, updateBtn, startServiceBtn, stopServiceBtn;
+    private Button saveBtn, updateBtn, activeBtn, batteryBtn, controlBtn;
 
-    private ImageView refreshTime;
+    private ImageView cellularRefreshImg, copyTokenImg, copyRefreshTokenImg;
 
     private JSONObject updateJson;
+
+    private static final String HIDE_TOKEN = "****************";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,21 +61,34 @@ public class MainActivity extends AppCompatActivity {
         config = PreferenceManager.getDefaultSharedPreferences(this);
 
         tokenEditText = findViewById(R.id.tokenEditText);
+        /*refreshTokenEditText = findViewById(R.id.refreshTokenEditText);*/
         /*deviceIdEditText = findViewById(R.id.deviceIdEditText);*/
         maxOilText = findViewById(R.id.maxOilText);
-        lastUpdateText = findViewById(R.id.lastUpdateText);
+        cellularText = findViewById(R.id.cellularText);
         offsetText = findViewById(R.id.offsetText);
-        refreshTime = findViewById(R.id.refreshTime);
+        cellularRefreshImg = findViewById(R.id.cellularRefreshImg);
         colorSpinner = findViewById(R.id.colorSpinner);
         updateBtn = findViewById(R.id.updateBtn);
+        activeBtn = findViewById(R.id.activeBtn);
+        batteryBtn = findViewById(R.id.batteryBtn);
+        controlBtn = findViewById(R.id.controlBtn);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, Constants.CAR_COLORS);
         colorSpinner.setAdapter(adapter);
 
-        String token = config.getString(Constants.REFRESH_TOKEN_KEY, null);
+        String token = config.getString(Constants.TOKEN_KEY, null);
         if (token != null) {
-            tokenEditText.setText(token);
+            tokenEditText.setText(HIDE_TOKEN);
+        }
+        /*String refreshToken = config.getString(Constants.REFRESH_TOKEN_KEY, null);
+        if (refreshToken != null) {
+            refreshTokenEditText.setText(HIDE_TOKEN);
+        }*/
+        String cacToken = config.getString(Constants.CAC_TOKEN_KEY, null);
+        if (cacToken != null) {
+            // 自动更新流量
+            // updateCellularData(false);
         }
         String carDataStr = config.getString(Constants.CAR_DATA_KEY, null);
         if (carDataStr != null) {
@@ -86,9 +106,6 @@ public class MainActivity extends AppCompatActivity {
         DeepalService deepalService = DeepalService.getInstance();
         deepalService.setContext(this);
 
-        String lastUpdate = config.getString(Constants.LAST_UPDATE_KEY, "");
-        lastUpdateText.setText(lastUpdate);
-
         int offsetMile = config.getInt(Constants.OFFSET_MILE_KEY, 0);
         if (offsetMile > 0) {
             offsetText.setText(String.valueOf(offsetMile));
@@ -98,21 +115,30 @@ public class MainActivity extends AppCompatActivity {
         saveBtn.setOnClickListener(v -> {
             save();
         });
-        refreshTime.setOnClickListener(v -> {
-            String date = config.getString(Constants.LAST_UPDATE_KEY, "");
-            lastUpdateText.setText(date);
-            Toast.makeText(this, "已更新", Toast.LENGTH_SHORT).show();
-        });
-        startServiceBtn = findViewById(R.id.startServiceBtn);
-        startServiceBtn.setOnClickListener(v -> {
-            AndroidUtil.startAliveService(getApplicationContext(), CarDataTimeService.class);
-            Toast.makeText(this, "启动服务", Toast.LENGTH_SHORT).show();
-        });
 
-        stopServiceBtn = findViewById(R.id.stopServiceBtn);
-        stopServiceBtn.setOnClickListener(v -> {
-            AndroidUtil.stopAliveService(getApplicationContext(), CarDataTimeService.class);
-            Toast.makeText(this, "停止服务", Toast.LENGTH_SHORT).show();
+        copyTokenImg = findViewById(R.id.copyTokenImg);
+        copyTokenImg.setOnClickListener(v -> {
+            String copyToken = config.getString(Constants.TOKEN_KEY, null);
+            if (copyToken == null) {
+                Toast.makeText(this, "请先配置token", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            AndroidUtil.copyToClipboard(this, copyToken);
+            Toast.makeText(this, "复制成功，请勿泄露给他人", Toast.LENGTH_SHORT).show();
+        });
+        /*copyRefreshTokenImg = findViewById(R.id.copyRefreshTokenImg);
+        copyRefreshTokenImg.setOnClickListener(v -> {
+            String copyToken = config.getString(Constants.REFRESH_TOKEN_KEY, null);
+            if (copyToken == null) {
+                Toast.makeText(this, "请先配置token", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            AndroidUtil.copyToClipboard(this, copyToken);
+            Toast.makeText(this, "复制成功，请勿泄露给他人", Toast.LENGTH_SHORT).show();
+        });*/
+
+        cellularRefreshImg.setOnClickListener(v -> {
+            updateCellularData(true);
         });
 
         int alertMessage = config.getInt(Constants.ALERT_MESSAGE_KEY, 0);
@@ -152,12 +178,29 @@ public class MainActivity extends AppCompatActivity {
             });
             builder.create().show();
         });
+
+        activeBtn.setOnClickListener(v -> {
+            active();
+        });
+
+        batteryBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(this, BatteryActivity.class);
+            startActivity(intent);
+        });
+
+
+        boolean notificationEnabled = Permission.isNotificationEnabled(this);
+        if (!notificationEnabled) {
+            Toast.makeText(this, "请开启通知权限以保证小组件正常运行", Toast.LENGTH_SHORT).show();
+        }
+
         checkUpdate(this);
     }
 
     private void save() {
         saveBtn.setEnabled(false);
-        String refreshToken = tokenEditText.getEditableText().toString().trim();
+        String token = tokenEditText.getEditableText().toString().trim();
+        /*String refreshToken = refreshTokenEditText.getEditableText().toString().trim();*/
         String color = (String) colorSpinner.getSelectedItem();
         String maxOilStr = maxOilText.getEditableText().toString().trim();
         String offsetMileStr = offsetText.getEditableText().toString().trim();
@@ -171,28 +214,51 @@ public class MainActivity extends AppCompatActivity {
             offsetMile = Integer.parseInt(offsetMileStr);
         } catch (Exception ignored) {
         }
-        if ("".equals(refreshToken)) {
-            Toast.makeText(this, "请输入refresh token", Toast.LENGTH_SHORT).show();
+        if (token.contains(HIDE_TOKEN)) {
+            token = config.getString(Constants.TOKEN_KEY, "");
+        }
+        /*if (refreshToken.contains(HIDE_TOKEN)) {
+            refreshToken = config.getString(Constants.REFRESH_TOKEN_KEY, "");
+        }*/
+        if ("".equals(token)) {
+            Toast.makeText(this, "请填写token", Toast.LENGTH_SHORT).show();
             return;
         }
         ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
-        /*String finalDeviceId = deviceId;*/
         int finalMaxOil = maxOil;
         int finalOffsetMile = offsetMile;
+        String finalToken = token;
+        /*String finalRefreshToken = refreshToken;*/
         singleThreadExecutor.execute(() -> {
             Looper.prepare();
             try {
-                JSONObject res = DeepalUtil.refreshCacToken(refreshToken);
-                if (res.getInteger("code") != 200) {
-                    String errorMsg = "获取信息失败，原因" + res.getString("message");
-                    Log.d(TAG, errorMsg);
-                    Toast.makeText(this, errorMsg, Toast.LENGTH_SHORT).show();
-                    return;
+                String newRefreshToken = null;
+                String accessToken = null;
+                if (finalToken != null) {
+                    // 使用登录token获取信息
+                    JSONObject res = DeepalUtil.getCacTokenByAuthToken(finalToken);
+                    if (res.getInteger("code") != 200) {
+                        Toast.makeText(this, "token无效", Toast.LENGTH_SHORT).show();
+                        runOnUiThread(() -> saveBtn.setEnabled(true));
+                        return;
+                    }
+                    JSONObject data = res.getJSONObject("data");
+                    accessToken = data.getString("cacToken");
+                    newRefreshToken = data.getString("refreshToken");
+                } else {
+                    // 使用refresh token获取信息
+                    /*newRefreshToken = finalRefreshToken;
+                    JSONObject res = DeepalUtil.refreshCacToken(finalRefreshToken);
+                    if (res.getInteger("code") != 200) {
+                        Toast.makeText(this, "refresh token无效", Toast.LENGTH_SHORT).show();
+                        runOnUiThread(() -> saveBtn.setEnabled(true));
+                        return;
+                    }
+                    JSONObject data = res.getJSONObject("data");
+                    accessToken = data.getString("access_token");*/
                 }
-                JSONObject data = res.getJSONObject("data");
-                String accessToken = data.getString("access_token");
 
-                res = DeepalUtil.getCarByToken(accessToken);
+                JSONObject res = DeepalUtil.getCarByToken(finalToken, accessToken);
                 if (res.getInteger("code") != 200) {
                     String errorMsg = "获取信息失败，原因" + res.getString("message");
                     Log.d(TAG, errorMsg);
@@ -216,15 +282,25 @@ public class MainActivity extends AppCompatActivity {
                 carData.put("color", color);
 
                 SharedPreferences.Editor edit = config.edit();
-                edit.putString(Constants.REFRESH_TOKEN_KEY, refreshToken);
+                edit.putString(Constants.TOKEN_KEY, finalToken);
+                edit.putString(Constants.REFRESH_TOKEN_KEY, newRefreshToken);
+                edit.putString(Constants.CAC_TOKEN_KEY, accessToken);
                 edit.putString(Constants.CAR_DATA_KEY, carData.toJSONString());
                 if (finalMaxOil > 0) {
                     edit.putInt(Constants.MAX_OIL_KEY, finalMaxOil);
                 }
-                if (finalOffsetMile > 0) {
+                if (finalOffsetMile >= 0) {
                     edit.putInt(Constants.OFFSET_MILE_KEY, finalOffsetMile);
                 }
                 edit.apply();
+                runOnUiThread(() -> {
+                    if (finalToken != null) {
+                        tokenEditText.setText(HIDE_TOKEN);
+                    }
+                    /*if (finalRefreshToken != null) {
+                        refreshTokenEditText.setText(HIDE_TOKEN);
+                    }*/
+                });
                 DeepalService deepalService = DeepalService.getInstance();
                 deepalService.setContext(this);
                 Toast.makeText(this, "保存成功", Toast.LENGTH_SHORT).show();
@@ -238,16 +314,41 @@ public class MainActivity extends AppCompatActivity {
         singleThreadExecutor.shutdown();
     }
 
+    private void active() {
+        activeBtn.setEnabled(false);
+        ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
+        singleThreadExecutor.execute(() -> {
+            Looper.prepare();
+            Context mContext = getApplicationContext();
+            DeepalService deepalService = DeepalService.getInstance();
+            deepalService.setContext(this);
+            CarData carData = deepalService.getCarData();
+            String msg = "刷新成功";
+            if (carData != null) {
+                AppWidgetManager manager = AppWidgetManager.getInstance(mContext);
+                RemoteViews carDataRemoteViews = CarWidgetProvider.bindButton(mContext);
+                CarWidgetProvider.getCarData(carData, mContext, carDataRemoteViews);
+                manager.updateAppWidget(new ComponentName(mContext, CarWidgetProvider.class), carDataRemoteViews);
+            } else {
+                msg = "刷新失败，请检查配置";
+            }
+            Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+            runOnUiThread(() -> activeBtn.setEnabled(true));
+            Looper.loop();
+        });
+        singleThreadExecutor.shutdown();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(Menu.NONE, 1, 1, "关于");
+        menu.add(Menu.NONE, 2, 2, "关于");
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case 1: {
+            case 2: {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setMessage(R.string.about_message);
                 builder.setNegativeButton("关闭", (dialog, which) -> {
@@ -297,6 +398,27 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        });
+        singleThreadExecutor.shutdown();
+    }
+
+    private void updateCellularData(boolean showTips) {
+        DeepalService deepalService = DeepalService.getInstance();
+        deepalService.setContext(this);
+        ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
+        singleThreadExecutor.execute(() -> {
+            Looper.prepare();
+            String newCellularData = deepalService.getCellularData(null);
+            String msg = "更新成功";
+            if (newCellularData != null) {
+                runOnUiThread(() -> cellularText.setText(newCellularData));
+            } else {
+                msg = "更新失败";
+            }
+            if (showTips) {
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+            }
+            Looper.loop();
         });
         singleThreadExecutor.shutdown();
     }

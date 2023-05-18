@@ -7,14 +7,13 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="widget_background_color">#FFFFFFFF</color>
+    <color name="widget_background_color">#FF000000</color>
     <color name="progress_green">#3ec156</color>
     <color name="progress_orange">#eb9001</color>
-    <color name="progress_background_color">#F1F1F1</color>
+    <color name="progress_background_color">#595656</color>
     <color name="lock_color">#595656</color>
     <color name="unlock_color">#268afb</color>
-    <color name="control_background_color">#99FFFFFF</color>
-    <color name="control_btn_bg_color">#99f7f7f7</color>
-    <color name="charge_color">#FF8BC34A</color>
-    <color name="widget_text_color">#FF747474</color>
+    <color name="control_background_color">#4D000000</color>
+    <color name="control_btn_bg_color">#4Df7f7f7</color>
+    <color name="widget_text_color">#FFF4F4F4</color>
 </resources>

@@ -10,6 +10,7 @@ import cn.xanderye.android.deepalwidget.constant.Constants;
 import cn.xanderye.android.deepalwidget.entity.CarData;
 import cn.xanderye.android.deepalwidget.util.DeepalUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
 import java.io.IOException;
@@ -28,7 +29,9 @@ public class DeepalService {
     private Context context = null;
 
     private JSONObject carDataJSON;
+    private String token = null;
     private String refreshToken = null;
+    private String cacToken = null;
     private int maxOil;
     private int offsetMile;
 
@@ -67,16 +70,25 @@ public class DeepalService {
                 carData.setRemainPower(data.getString("remainPower"));
                 carData.setServerTime(data.getString("serverTime"));
                 carData.setTerminalTime(data.getString("terminalTime"));
-                carData.setDriverDoorLock(data.getInteger("driverDoorLock"));
-                carData.setPassengerDoorLock(data.getInteger("passengerDoorLock"));
-                carData.setChargeStatus(data.getInteger("chargeStatus"));
+                carData.setLeftFrontDoorLock(data.getInteger("leftFrontDoorLock"));
+                carData.setDriverDoor(data.getInteger("driverDoor"));
+                carData.setPassengerDoor(data.getInteger("passengerDoor"));
+                carData.setLeftRearDoor(data.getInteger("leftRearDoor"));
+                carData.setRightRearDoor(data.getInteger("rightRearDoor"));
+                carData.setBatteryChargeStatus(data.getInteger("batteryChargeStatus"));
+                carData.setAcChargeGunConnectionState(data.getInteger("acChargeGunConnectionState"));
+                carData.setDcDhargeGunConnectionState(data.getInteger("dcDhargeGunConnectionState"));
+                carData.setObcChrgInpAcI(data.getDouble("obcChrgInpAcI"));
+                carData.setTotalVoltage(data.getDouble("totalVoltage"));
+                carData.setTotalCurrent(data.getDouble("totalCurrent"));
+                carData.setChargDeltMins(data.getInteger("chargDeltMins"));
                 String remainedOilMile = data.getString("remainedOilMile");
                 // 总里程偏移
-                String totalOdometer = data.getString("totalOdometer");
+                int totalOdometer = Double.valueOf(data.getString("totalOdometer")).intValue();
                 if (offsetMile > 0) {
-                    totalOdometer = String.valueOf(Double.valueOf(totalOdometer).intValue() + offsetMile);
+                    totalOdometer = totalOdometer + offsetMile;
                 }
-                carData.setTotalOdometer(totalOdometer);
+                carData.setTotalOdometer(String.valueOf(totalOdometer));
                 if (remainedOilMile != null) {
                     if ("0".equals(carData.getRemainedPowerMile())) {
                         try {
@@ -108,11 +120,13 @@ public class DeepalService {
                     }
                 }
                 res = getCarLocation(cacToken);
-                if (res.getInteger("code") == 0) {
-                    data = res.getJSONObject("data");
-                    carData.setLng(data.getDouble("lng"));
-                    carData.setLat(data.getDouble("lat"));
-                    carData.setLocation(data.getString("addrDesc"));
+                if (res != null && res.containsKey("code")) {
+                    if (res.getInteger("code") == 0) {
+                        data = res.getJSONObject("data");
+                        carData.setLng(data.getDouble("lng"));
+                        carData.setLat(data.getDouble("lat"));
+                        carData.setLocation(data.getString("addrDesc"));
+                    }
                 }
 
                 LocalDateTime localDateTime = LocalDateTime.now();
@@ -132,6 +146,9 @@ public class DeepalService {
     }
 
     public JSONObject getCarLocation(String cacToken) {
+        if (carDataJSON == null) {
+            return null;
+        }
         String carId = carDataJSON.getString("carId");
         if (cacToken == null) {
             cacToken = getCacToken();
@@ -145,29 +162,116 @@ public class DeepalService {
         return null;
     }
 
+    public String getCellularData(String cacToken) {
+        if (carDataJSON == null) {
+            return null;
+        }
+        String carId = carDataJSON.getString("carId");
+        if (cacToken == null) {
+            cacToken = getCacToken();
+        }
+        try {
+            JSONObject res = DeepalUtil.getCellularData(cacToken, carId);
+            if (res.getInteger("code") == 0) {
+                JSONArray data = res.getJSONArray("data");
+                if (!data.isEmpty()) {
+                    JSONObject cellular = data.getJSONObject(0);
+                    String left = cellular.getString("left");
+                    String total = cellular.getString("total");
+                    String unit = cellular.getString("totalUnit");
+                    return left + "/" + total + " " + unit;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.d(TAG, "获取流量失败，原因：" + e.getMessage());
+        }
+        return null;
+    }
+
+    public JSONArray getControlHistory(String cacToken) {
+        if (carDataJSON == null) {
+            return null;
+        }
+        String carId = carDataJSON.getString("carId");
+        if (cacToken == null) {
+            cacToken = getCacToken();
+        }
+        try {
+            JSONObject res = DeepalUtil.getControlActionHistory(cacToken, carId);
+            if (res.getInteger("code") == 0) {
+                return res.getJSONObject("data").getJSONArray("data");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.d(TAG, "获取操作历史失败，原因：" + e.getMessage());
+        }
+        return null;
+    }
+
     public String getCacToken() {
         try {
-            JSONObject jsonObject = DeepalUtil.refreshCacToken(refreshToken);
-            if (jsonObject.getInteger("code") == 200) {
-                JSONObject data = jsonObject.getJSONObject("data");
-                String newRefreshToken = data.getString("refresh_token");
-                if (!refreshToken.equals(newRefreshToken)) {
-                    Log.d(TAG, "refreshToken变动，更新");
-                    refreshToken = newRefreshToken;
+            boolean needRefresh = true;
+            if (cacToken != null) {
+                needRefresh = !checkToken(cacToken);
+            }
+            if (needRefresh) {
+                Log.d(TAG, "需要刷新token");
+                if (token != null) {
+                    JSONObject res = DeepalUtil.getCacTokenByAuthToken(token);
+                    if (res.getInteger("code") != 200) {
+                        Log.d(TAG, "用token刷新cacToken返回 " + res.toJSONString());
+                        return null;
+                    }
+                    JSONObject data = res.getJSONObject("data");
+                    String accessToken = data.getString("cacToken");
+                    String refreshToken = data.getString("refreshToken");
                     SharedPreferences config = PreferenceManager.getDefaultSharedPreferences(context);
                     SharedPreferences.Editor edit = config.edit();
+                    edit.putString(Constants.CAC_TOKEN_KEY, accessToken);
                     edit.putString(Constants.REFRESH_TOKEN_KEY, refreshToken);
                     edit.apply();
+                    return accessToken;
+                } else if (refreshToken != null) {
+                    JSONObject jsonObject = DeepalUtil.refreshCacToken(refreshToken);
+                    if (jsonObject.getInteger("code") == 200) {
+                        JSONObject data = jsonObject.getJSONObject("data");
+                        String newRefreshToken = data.getString("refresh_token");
+                        if (!refreshToken.equals(newRefreshToken)) {
+                            Log.d(TAG, "refreshToken变动，更新");
+                            refreshToken = newRefreshToken;
+                            SharedPreferences config = PreferenceManager.getDefaultSharedPreferences(context);
+                            SharedPreferences.Editor edit = config.edit();
+                            edit.putString(Constants.REFRESH_TOKEN_KEY, refreshToken);
+                            edit.apply();
+                        }
+                        String accessToken = data.getString("access_token");
+                        SharedPreferences config = PreferenceManager.getDefaultSharedPreferences(context);
+                        SharedPreferences.Editor edit = config.edit();
+                        edit.putString(Constants.CAC_TOKEN_KEY, accessToken);
+                        edit.apply();
+                        return accessToken;
+                    } else {
+                        Log.d(TAG, "用refreshToken刷新cacToken返回 " + jsonObject.toJSONString());
+                    }
                 }
-                return data.getString("access_token");
-            } else {
-                Log.d(TAG, "刷新cacToken返回 " + jsonObject.toJSONString());
             }
+            return cacToken;
         } catch (IOException e) {
             e.printStackTrace();
             Log.d(TAG, "刷新cacToken失败，原因：" + e.getMessage());
         }
         return null;
+    }
+
+    public boolean checkToken(String cacToken) {
+        try {
+            JSONObject res = DeepalUtil.getBaseConfig(cacToken);
+            return res.getInteger("code") == 0;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public void setContext(Context context) {
@@ -182,10 +286,15 @@ public class DeepalService {
         if (carDataStr != null) {
             carDataJSON = JSON.parseObject(carDataStr);
         }
+        token = config.getString(Constants.TOKEN_KEY, null);
         refreshToken = config.getString(Constants.REFRESH_TOKEN_KEY, null);
+        cacToken = config.getString(Constants.CAC_TOKEN_KEY, null);
         maxOil = config.getInt(Constants.MAX_OIL_KEY, Constants.DEFAULT_MILE_MILE);
         offsetMile = config.getInt(Constants.OFFSET_MILE_KEY, 0);
-        Log.d(TAG, "初始化数据，refreshToken: " + refreshToken + ", " +
-                "carData: " + carDataStr + ", maxOil: " + maxOil + ", offsetMile:" + offsetMile);
+        Log.d(TAG, "初始化数据，carData: " + carDataStr + ", maxOil: " + maxOil + ", offsetMile:" + offsetMile);
+    }
+
+    public JSONObject getCarDataJSON() {
+        return carDataJSON;
     }
 }
