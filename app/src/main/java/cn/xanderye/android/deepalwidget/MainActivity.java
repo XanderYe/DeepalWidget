@@ -10,9 +10,7 @@ import android.net.Uri;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
+import android.view.*;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,10 +19,7 @@ import cn.xanderye.android.deepalwidget.constant.Constants;
 import cn.xanderye.android.deepalwidget.entity.CarData;
 import cn.xanderye.android.deepalwidget.provider.CarWidgetProvider;
 import cn.xanderye.android.deepalwidget.service.DeepalService;
-import cn.xanderye.android.deepalwidget.util.AndroidUtil;
-import cn.xanderye.android.deepalwidget.util.DeepalUtil;
-import cn.xanderye.android.deepalwidget.util.DeviceUtil;
-import cn.xanderye.android.deepalwidget.util.Permission;
+import cn.xanderye.android.deepalwidget.util.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -44,13 +39,13 @@ public class MainActivity extends AppCompatActivity {
 
     private EditText tokenEditText, refreshTokenEditText, maxOilText, offsetText;
 
-    private Spinner colorSpinner;
+    private Spinner typeSpinner, colorSpinner;
 
     private Button saveBtn, updateBtn, activeBtn, batteryBtn, controlBtn;
 
     private ImageView cellularRefreshImg, copyTokenImg, copyRefreshTokenImg;
 
-    private JSONObject updateJson;
+    private JSONArray updateArray;
 
     private static final String HIDE_TOKEN = "****************";
 
@@ -67,15 +62,30 @@ public class MainActivity extends AppCompatActivity {
         cellularText = findViewById(R.id.cellularText);
         offsetText = findViewById(R.id.offsetText);
         cellularRefreshImg = findViewById(R.id.cellularRefreshImg);
+        typeSpinner = findViewById(R.id.typeSpinner);
         colorSpinner = findViewById(R.id.colorSpinner);
         updateBtn = findViewById(R.id.updateBtn);
         activeBtn = findViewById(R.id.activeBtn);
         batteryBtn = findViewById(R.id.batteryBtn);
         controlBtn = findViewById(R.id.controlBtn);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_list_item_1, Constants.CAR_COLORS);
-        colorSpinner.setAdapter(adapter);
+        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_list_item_1, Constants.CAR_TYPE);
+        typeSpinner.setAdapter(typeAdapter);
+        String carType = config.getString(Constants.CAR_TYPE_KEY, "SL03");
+        typeSpinner.setSelection(Arrays.asList(Constants.CAR_TYPE).indexOf(carType));
+        initColorSpinner(carType);
+
+        typeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String carType1 = typeSpinner.getSelectedItem().toString();
+                initColorSpinner(carType1);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
 
         String token = config.getString(Constants.TOKEN_KEY, null);
         if (token != null) {
@@ -95,7 +105,11 @@ public class MainActivity extends AppCompatActivity {
             JSONObject carDataJSON = JSON.parseObject(carDataStr);
             String color = carDataJSON.getString("color");
             if (color != null) {
-             colorSpinner.setSelection(Arrays.asList(Constants.CAR_COLORS).indexOf(color));
+                if ("S7".equals(carType)) {
+                    colorSpinner.setSelection(Arrays.asList(Constants.S7_CAR_COLOR).indexOf(color));
+                } else {
+                    colorSpinner.setSelection(Arrays.asList(Constants.SL03_CAR_COLOR).indexOf(color));
+                }
             }
         }
 
@@ -160,10 +174,15 @@ public class MainActivity extends AppCompatActivity {
 
         updateBtn.setOnClickListener(v -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            String version = updateJson.getString("version");
-            String content = "版本：" + version + "\n" +
-                    updateJson.getString("content").replace("\\n", "\n");
-            builder.setMessage(content);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < updateArray.size(); i++) {
+                JSONObject update = updateArray.getJSONObject(i);
+                String version = update.getString("version");
+                sb.append("版本：").append(version).append("\n")
+                        .append(update.getString("content").replace("\\n", "\n"))
+                        .append("\n\n");
+            }
+            builder.setMessage(sb.toString());
             builder.setNegativeButton("关闭", (dialog, which) -> {
                 dialog.cancel();
             });
@@ -197,10 +216,23 @@ public class MainActivity extends AppCompatActivity {
         checkUpdate(this);
     }
 
+    private void initColorSpinner(String carType) {
+        ArrayAdapter<String> colorAdapter;
+        if ("S7".equals(carType)) {
+            colorAdapter = new ArrayAdapter<>(this,
+                    android.R.layout.simple_list_item_1, Constants.S7_CAR_COLOR);
+        } else {
+            colorAdapter = new ArrayAdapter<>(this,
+                    android.R.layout.simple_list_item_1, Constants.SL03_CAR_COLOR);
+        }
+        colorSpinner.setAdapter(colorAdapter);
+    }
+
     private void save() {
         saveBtn.setEnabled(false);
         String token = tokenEditText.getEditableText().toString().trim();
         /*String refreshToken = refreshTokenEditText.getEditableText().toString().trim();*/
+        String type = (String) typeSpinner.getSelectedItem();
         String color = (String) colorSpinner.getSelectedItem();
         String maxOilStr = maxOilText.getEditableText().toString().trim();
         String offsetMileStr = offsetText.getEditableText().toString().trim();
@@ -286,6 +318,7 @@ public class MainActivity extends AppCompatActivity {
                 edit.putString(Constants.REFRESH_TOKEN_KEY, newRefreshToken);
                 edit.putString(Constants.CAC_TOKEN_KEY, accessToken);
                 edit.putString(Constants.CAR_DATA_KEY, carData.toJSONString());
+                edit.putString(Constants.CAR_TYPE_KEY, type);
                 if (finalMaxOil > 0) {
                     edit.putInt(Constants.MAX_OIL_KEY, finalMaxOil);
                 }
@@ -341,6 +374,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add(Menu.NONE, 1, 1, "公众号");
         menu.add(Menu.NONE, 2, 2, "关于");
         return true;
     }
@@ -348,8 +382,30 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
+            case 1: {
+                LayoutInflater layoutInflater = LayoutInflater.from(this);
+                final View qrCodeView = layoutInflater.inflate(R.layout.dialog_qrcode, null);
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("二维码");
+                builder.setView(qrCodeView);
+                builder.setNegativeButton("关闭", (dialog, which) -> {
+                    dialog.cancel();
+                });
+                builder.setPositiveButton("浏览器打开", (dialog, which) -> {
+                    dialog.cancel();
+                    Intent intent = new Intent();
+                    intent.setAction("android.intent.action.VIEW");
+                    Uri uri = Uri.parse("https://i.328888.xyz/2023/05/16/ViJdVc.jpeg");
+                    intent.setData(uri);
+                    startActivity(intent);
+                });
+                builder.create().show();
+                break;
+            }
             case 2: {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                String appVersion = this.getResources().getString(R.string.about_version);
+                builder.setTitle("版本：" + appVersion);
                 builder.setMessage(R.string.about_message);
                 builder.setNegativeButton("关闭", (dialog, which) -> {
                     dialog.cancel();
@@ -386,13 +442,15 @@ public class MainActivity extends AppCompatActivity {
         ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
         singleThreadExecutor.execute(() -> {
             try {
-                JSONObject res = DeepalUtil.checkUpdate();
+                int appVersion = CommonUtil.parseVersion(context.getResources().getString(R.string.about_version));
+                JSONObject res = DeepalUtil.checkUpdate(appVersion);
                 if (res.getInteger("code") == 0) {
-                    String appVersion = context.getResources().getString(R.string.about_version);
-                    updateJson = res.getJSONObject("data");
-                    String version = updateJson.getString("version");
-                    if (!appVersion.equals(version)) {
-                        runOnUiThread(() -> updateBtn.setVisibility(View.VISIBLE));
+                    updateArray = res.getJSONArray("data");
+                    if (!updateArray.isEmpty()) {
+                        int version = updateArray.getJSONObject(0).getIntValue("versionCode");
+                        if (appVersion < version) {
+                            runOnUiThread(() -> updateBtn.setVisibility(View.VISIBLE));
+                        }
                     }
                 }
             } catch (IOException e) {

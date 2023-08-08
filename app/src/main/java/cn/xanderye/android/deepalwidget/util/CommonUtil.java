@@ -23,4 +23,13 @@ public class CommonUtil {
         }
         return result;
     }
+
+    public static int parseVersion(String version) {
+        String versionCode = version.replace(".", "");
+        try {
+            return Integer.parseInt(versionCode);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
 }

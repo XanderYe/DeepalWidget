@@ -242,8 +242,8 @@ public class DeepalUtil {
      * @author XanderYe
      * @date 2023/3/22
      */
-    public static JSONObject checkUpdate() throws IOException {
-        String url = "https://tool.xanderye.cn/api/deepal/checkUpdate";
+    public static JSONObject checkUpdate(int appVersion) throws IOException {
+        String url = "https://tool.xanderye.cn/api/deepal/checkUpdate?versionCode=" + appVersion;
         HttpUtil.ResEntity resEntity = HttpUtil.doGet(url, null);
         return JSON.parseObject(resEntity.getResponse());
     }

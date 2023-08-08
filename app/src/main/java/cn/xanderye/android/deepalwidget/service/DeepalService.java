@@ -32,6 +32,7 @@ public class DeepalService {
     private String token = null;
     private String refreshToken = null;
     private String cacToken = null;
+    private String carType = "SL03";
     private int maxOil;
     private int offsetMile;
 
@@ -62,6 +63,7 @@ public class DeepalService {
             if (res.getInteger("code") == 0) {
                 JSONObject data = res.getJSONObject("data");
                 CarData carData = new CarData();
+                carData.setType(carType);
                 carData.setColor(carDataJSON.getString("color"));
                 carData.setCarName(carDataJSON.getString("carName"));
                 carData.setPlateNumber(carDataJSON.getString("plateNumber"));
@@ -282,6 +284,7 @@ public class DeepalService {
     }
     public void init() {
         SharedPreferences config = PreferenceManager.getDefaultSharedPreferences(context);
+        carType = config.getString(Constants.CAR_TYPE_KEY, "SL03");
         String carDataStr = config.getString(Constants.CAR_DATA_KEY, null);
         if (carDataStr != null) {
             carDataJSON = JSON.parseObject(carDataStr);

@@ -17,10 +17,12 @@ import android.widget.RemoteViews;
 import android.widget.Toast;
 import androidx.core.content.ContextCompat;
 import cn.xanderye.android.deepalwidget.R;
+import cn.xanderye.android.deepalwidget.activity.BatteryActivity;
 import cn.xanderye.android.deepalwidget.constant.Constants;
 import cn.xanderye.android.deepalwidget.entity.CarData;
 import cn.xanderye.android.deepalwidget.service.DeepalService;
 import cn.xanderye.android.deepalwidget.util.AndroidUtil;
+import cn.xanderye.android.deepalwidget.util.CommonUtil;
 import com.alibaba.fastjson.JSONObject;
 
 import java.util.concurrent.ExecutorService;
@@ -40,6 +42,8 @@ public class CarWidgetProvider extends AppWidgetProvider {
     public static final String OPEN_AMAP_WIDGET = "cn.xanderye.android.OPEN_AMAP_WIDGET";
 
     public static final String REFRESH_WIDGET = "cn.xanderye.android.REFRESH_WIDGET";
+
+    public static final String OPEN_BATTERY_WIDGET = "cn.xanderye.android.OPEN_BATTERY_WIDGET";
 
     @Override
     public void onEnabled(Context context) {
@@ -97,6 +101,12 @@ public class CarWidgetProvider extends AppWidgetProvider {
                 });
                 singleThreadExecutor.shutdown();
                 break;
+            case OPEN_BATTERY_WIDGET: {
+                Intent batteryIntent = new Intent(context, BatteryActivity.class);
+                batteryIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(batteryIntent);
+                break;
+            }
         }
         RemoteViews remoteViews = bindButton(context);
         refreshWidget(context, remoteViews);
@@ -163,6 +173,10 @@ public class CarWidgetProvider extends AppWidgetProvider {
         Intent amapIntent = new Intent(context, CarWidgetProvider.class).setAction(OPEN_AMAP_WIDGET);
         PendingIntent amapPendingIntent = PendingIntent.getBroadcast(context, 0, amapIntent, flag);
         remoteViews.setOnClickPendingIntent(R.id.location_layout, amapPendingIntent);
+
+        Intent batteryIntent = new Intent(context, CarWidgetProvider.class).setAction(OPEN_BATTERY_WIDGET);
+        PendingIntent batteryPendingIntent = PendingIntent.getBroadcast(context, 0, batteryIntent, flag);
+        remoteViews.setOnClickPendingIntent(R.id.remainTimeText, batteryPendingIntent);
         return remoteViews;
     }
 
@@ -175,7 +189,7 @@ public class CarWidgetProvider extends AppWidgetProvider {
         if (carData != null) {
             Log.d(TAG, "车辆信息：" + carData);
             if (carData.getColor() != null) {
-                Bitmap bitmap =  AndroidUtil.getImageFromAssetsFile(context, carData.getColor() + ".png");
+                Bitmap bitmap =  AndroidUtil.getImageFromAssetsFile(context, carData.getType() + carData.getColor() + ".png");
                 if (bitmap != null) {
                     remoteViews.setImageViewBitmap(R.id.carImg, bitmap);
                 }
@@ -185,6 +199,7 @@ public class CarWidgetProvider extends AppWidgetProvider {
             remoteViews.setTextViewText(R.id.locationText, carData.getLocation());
             remoteViews.setTextViewText(R.id.terminalTimeText, carData.getTerminalTime());
             remoteViews.setTextViewText(R.id.totalOdometerText, carData.getTotalOdometer() + "km");
+            remoteViews.setTextViewText(R.id.temperatureText, carData.getVehicleTemperature() + "℃");
 
             int powerPercent = Double.valueOf(carData.getRemainPower()).intValue();
 
@@ -234,11 +249,15 @@ public class CarWidgetProvider extends AppWidgetProvider {
                 if (bitmap != null) {
                     remoteViews.setImageViewBitmap(chargeIconId, bitmap);
                 }
+                String remainTime = "充满剩余 " + CommonUtil.formatTime(carData.getChargDeltMins());
+                remoteViews.setViewVisibility(R.id.remainTimeText, View.VISIBLE);
+                remoteViews.setTextViewText(R.id.remainTimeText, remainTime);
             } else {
                 bitmap = AndroidUtil.getImageFromAssetsFile(context, "power_icon.png");
                 if (bitmap != null) {
                     remoteViews.setImageViewBitmap(chargeIconId, bitmap);
                 }
+                remoteViews.setViewVisibility(R.id.remainTimeText, View.GONE);
             }
             return true;
         } else {

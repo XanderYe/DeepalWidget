@@ -10,6 +10,7 @@ import lombok.Data;
 @Data
 public class CarData {
 
+    private String type;
     /**
      * 颜色
      */

@@ -5,4 +5,4 @@
 [安卓深蓝小组件使用教程](https://docs.qq.com/doc/DZnZtWkp3aVRCSHFk)
 
 # 公众号二维码
-![深蓝车友汇](https://i.328888.xyz/2023/05/16/ViJdVc.jpeg)
+![深蓝车友俱乐部](app/src/main/res/drawable/wx.jpg)

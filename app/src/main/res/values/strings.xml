@@ -2,7 +2,7 @@
     <string name="app_name">深蓝小组件</string>
     <string name="car_data_widget_name">车辆信息</string>
     <string name="car_control_widget_name">车辆控制</string>
-    <string name="about_version">2.0.0</string>
+    <string name="about_version">2.0.4</string>
     <string name="alert_message">
         1. 应用所展示的信息不保证准确无误，锁车、充电、电量、油量等所有信息仅供参考，请勿将桌面组件展示的数据作为决策依据，由于应用展示数据错误/误差造成的任何后果，本人概不负责。\n
         2. 应用需要使用深蓝APP的登录信息来获取数据，应用仅将信息存储于本地，并不发送到任何云端服务器，如有需要请逆向应用验证。\n

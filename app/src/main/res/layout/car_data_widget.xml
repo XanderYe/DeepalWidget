@@ -9,24 +9,42 @@
               android:orientation="vertical">
     <LinearLayout android:layout_width="match_parent"
                   android:layout_height="24dp"
+                  android:layout_weight="1"
                   android:orientation="horizontal">
-        <TextView android:id="@+id/carNameText"
-                  android:text="我的爱车"
-                  android:textSize="14dp"
-                  android:textFontWeight="1000"
-                  android:gravity="bottom|center"
-                  android:layout_marginLeft="16dp"
-                  android:layout_width="wrap_content"
-                  android:layout_height="match_parent">
-        </TextView>
-        <TextView android:id="@+id/plateNumberText"
-                  android:text="浙BD88888"
-                  android:textSize="11dp"
-                  android:gravity="bottom|center"
-                  android:layout_marginLeft="16dp"
-                  android:layout_width="wrap_content"
-                  android:layout_height="match_parent">
-        </TextView>
+        <LinearLayout android:layout_width="0dp"
+                      android:layout_height="match_parent"
+                      android:layout_weight="1">
+            <TextView android:id="@+id/carNameText"
+                      android:text="我的爱车"
+                      android:textSize="14dp"
+                      android:textFontWeight="1000"
+                      android:gravity="bottom|center"
+                      android:layout_marginLeft="16dp"
+                      android:layout_width="wrap_content"
+                      android:layout_height="match_parent">
+            </TextView>
+            <TextView android:id="@+id/plateNumberText"
+                      android:text="浙BD88888"
+                      android:textSize="11dp"
+                      android:gravity="bottom|center"
+                      android:layout_marginLeft="16dp"
+                      android:layout_width="wrap_content"
+                      android:layout_height="match_parent">
+            </TextView>
+        </LinearLayout>
+        <LinearLayout android:layout_width="wrap_content"
+                      android:layout_height="match_parent">
+            <TextView android:id="@+id/remainTimeText"
+                      android:text=""
+                      android:textColor="@color/charge_color"
+                      android:visibility="gone"
+                      android:textSize="12sp"
+                      android:gravity="center"
+                      android:layout_marginRight="8dp"
+                      android:layout_width="wrap_content"
+                      android:layout_height="match_parent">
+            </TextView>
+        </LinearLayout>
     </LinearLayout>
     <LinearLayout android:layout_width="match_parent"
                   android:layout_height="80dp"
@@ -39,9 +57,8 @@
             <ImageView
                     android:id="@+id/carImg"
                     android:layout_width="150dp"
-                    android:layout_height="50dp"
-                    android:layout_gravity="center_horizontal"
-                    android:background="@drawable/car_img"/>
+                    android:layout_height="62dp"
+                    android:layout_gravity="center_horizontal"/>
         </LinearLayout>
         <LinearLayout android:layout_width="match_parent"
                       android:layout_height="match_parent"
@@ -239,6 +256,13 @@
                               android:layout_width="wrap_content"
                               android:layout_height="match_parent"
                               android:layout_weight="1"/>
+                    <TextView android:id="@+id/temperatureText"
+                              android:text="0℃"
+                              android:layout_marginLeft="4dp"
+                              android:gravity="center_vertical"
+                              android:layout_width="wrap_content"
+                              android:layout_height="match_parent">
+                    </TextView>
                 </LinearLayout>
             </LinearLayout>
             <LinearLayout android:layout_width="match_parent"
